@@ -1,0 +1,1775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Birthday Boss Fight — Edi</title>
+    <style>
+        /* ===== IMPORTS ===== */
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+
+        /* ===== ROOT — Purple · Red · Blue · Black ===== */
+        :root {
+            --bg: #080611;
+            --panel: #151022;
+            --purple: #a875ff;
+            --purple-dark: #7c3aed;
+            --red: #ff526d;
+            --red-glow: #ff1a3a;
+            --blue: #4ce8ff;
+            --blue-dark: #1a8cff;
+            --yellow: #ffe66d;
+            --green: #68f58a;
+            --white: #f0eefe;
+            --black: #0a0a0f;
+            --monster-green: #4aff7a;
+            --monster-dark: #1a331f;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            height: 100vh;
+            background:
+                radial-gradient(circle at 15% 25%, #32134d, transparent 35%),
+                radial-gradient(circle at 85% 75%, #1a0a2a, transparent 35%),
+                var(--bg);
+            color: var(--white);
+            font-family: 'VT323', monospace;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* CRT scanlines */
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 100;
+            opacity: .08;
+            background: repeating-linear-gradient(0deg,
+                    transparent 0px,
+                    transparent 3px,
+                    white 3px,
+                    white 4px);
+        }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--black);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--purple);
+            border-radius: 2px;
+        }
+
+        /* ===== SCREENS ===== */
+        .screen {
+            min-height: 100vh;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 12px;
+            width: 100%;
+        }
+        .hidden {
+            display: none !important;
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn {
+            border: 4px solid var(--white);
+            background: var(--purple-dark);
+            color: #fff;
+            font-family: 'Press Start 2P';
+            font-size: 11px;
+            padding: 14px 22px;
+            cursor: pointer;
+            box-shadow: 6px 6px rgba(0, 0, 0, .6);
+            transition: .1s;
+            text-shadow: 0 0 10px rgba(168, 117, 255, .3);
+        }
+        .btn:hover {
+            transform: translate(3px, 3px);
+            box-shadow: 3px 3px rgba(0, 0, 0, .6);
+        }
+        .btn:active {
+            transform: translate(6px, 6px);
+            box-shadow: none;
+        }
+
+        /* ===== INTRO ===== */
+        .title {
+            font-family: 'Press Start 2P';
+            text-align: center;
+            font-size: clamp(22px, 4.5vw, 52px);
+            line-height: 1.5;
+            color: var(--blue);
+            text-shadow: 6px 6px var(--purple-dark), 0 0 50px rgba(168, 117, 255, .25);
+            animation: floating 2s infinite ease-in-out;
+        }
+        .title .highlight {
+            color: var(--red);
+            text-shadow: 6px 6px #6f214d, 0 0 40px rgba(255, 50, 50, .2);
+        }
+        .subtitle {
+            text-align: center;
+            font-size: 28px;
+            color: #bbb;
+            margin: 16px 0 28px;
+        }
+
+        @keyframes floating {
+            50% {
+                transform: translateY(-6px);
+            }
+        }
+
+        /* ===== GAME CONTAINER ===== */
+        #game {
+            padding: 6px 10px;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .game-container {
+            width: 100%;
+            max-width: 1200px;
+            margin: auto;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 0 4px;
+            flex-shrink: 0;
+        }
+        .logo {
+            font-family: 'Press Start 2P';
+            font-size: clamp(10px, 1.4vw, 16px);
+            color: var(--blue);
+            text-shadow: 0 0 20px rgba(76, 232, 255, .15);
+        }
+        .logo .accent {
+            color: var(--purple);
+        }
+        .level {
+            font-family: 'Press Start 2P';
+            font-size: clamp(9px, 1.2vw, 13px);
+            color: var(--red);
+            text-shadow: 0 0 20px rgba(255, 50, 50, .15);
+        }
+
+        /* ===== BOSS AREA — HERO vs MONSTER ===== */
+        .boss-area {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 6px 8px;
+            align-items: start;
+            background: rgba(21, 16, 34, .7);
+            border: 2px solid var(--purple-dark);
+            padding: 8px 12px 6px;
+            border-radius: 8px;
+            flex-shrink: 0;
+            box-shadow: 0 0 40px rgba(168, 117, 255, .06);
+        }
+
+        /* ----- HERO COLUMN ----- */
+        .hero-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+        .hero-col .char-name {
+            font-family: 'Press Start 2P';
+            font-size: clamp(11px, 1.3vw, 18px);
+            color: var(--blue);
+            text-shadow: 0 0 20px rgba(76, 232, 255, .2);
+            letter-spacing: 1px;
+            margin-bottom: 0px;
+        }
+        .hero-col .char-name .badge {
+            font-size: 10px;
+            color: var(--purple);
+            margin-left: 4px;
+        }
+
+        /* ----- MONSTER COLUMN ----- */
+        .monster-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+        .monster-col .char-name {
+            font-family: 'Press Start 2P';
+            font-size: clamp(10px, 1.2vw, 16px);
+            color: var(--red);
+            text-shadow: 0 0 20px rgba(255, 50, 50, .2);
+            letter-spacing: 1px;
+            margin-bottom: 0px;
+        }
+        .monster-col .char-name .badge {
+            font-size: 10px;
+            color: var(--purple);
+            margin-left: 4px;
+        }
+
+        /* ----- VS BADGE ----- */
+        .vs-col {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 2px;
+        }
+        .vs-badge {
+            font-family: 'Press Start 2P';
+            font-size: clamp(18px, 2.8vw, 34px);
+            color: var(--yellow);
+            text-shadow: 0 0 30px rgba(255, 200, 0, .2), 3px 3px #000;
+            background: rgba(0, 0, 0, .5);
+            padding: 2px 8px;
+            border-radius: 6px;
+            border: 2px solid var(--yellow);
+            animation: pulseVs 1.2s infinite ease-in-out;
+            letter-spacing: 2px;
+            line-height: 1;
+        }
+        @keyframes pulseVs {
+            0%,
+            100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.08);
+            }
+        }
+
+        /* ----- HP BARS ----- */
+        .hp-wrap {
+            width: 100%;
+            max-width: 200px;
+        }
+        .hp-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: clamp(14px, 1.3vw, 20px);
+            margin-bottom: 1px;
+            color: #aaa;
+            font-family: 'VT323', monospace;
+        }
+        .hp-label .hp-num {
+            color: var(--white);
+        }
+        .bar {
+            height: clamp(14px, 1.6vw, 22px);
+            background: #0a0512;
+            border: 2px solid rgba(255, 255, 255, .15);
+            overflow: hidden;
+            border-radius: 4px;
+        }
+        .hp {
+            height: 100%;
+            width: 100%;
+            transition: .35s ease;
+            border-radius: 2px;
+        }
+        .boss-hp {
+            background: linear-gradient(90deg, var(--red), #ff9d4d);
+            box-shadow: 0 0 20px rgba(255, 50, 50, .15);
+        }
+        .player-hp {
+            background: linear-gradient(90deg, var(--blue), #6576ff);
+            box-shadow: 0 0 20px rgba(76, 232, 255, .15);
+        }
+
+        /* ----- CHARACTER SPRITES ----- */
+        .character-stage {
+            height: clamp(100px, 18vh, 180px);
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            position: relative;
+            width: 100%;
+        }
+        .character {
+            width: clamp(70px, 11vw, 120px);
+            height: clamp(95px, 15vh, 160px);
+            position: relative;
+            animation: idle 1.8s infinite ease-in-out;
+            filter: drop-shadow(0 10px 20px rgba(0, 0, 0, .5));
+            transform-origin: bottom center;
+        }
+        /* Hero sprite details */
+        .character .head {
+            width: clamp(45px, 7vw, 78px);
+            height: clamp(45px, 7vw, 78px);
+            background: #f1bd91;
+            border: 4px solid #19121e;
+            border-radius: 45% 45% 42% 42%;
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3;
+        }
+        .character .hair {
+            width: clamp(48px, 7.5vw, 84px);
+            height: clamp(25px, 4vw, 44px);
+            background: #24152d;
+            border-radius: 50% 55% 25% 25%;
+            position: absolute;
+            top: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 4;
+        }
+        .character .hair::after {
+            content: "";
+            position: absolute;
+            width: clamp(16px, 2.5vw, 28px);
+            height: clamp(16px, 2.5vw, 28px);
+            background: #24152d;
+            right: -6px;
+            top: 8px;
+            transform: rotate(35deg);
+        }
+        .character .eye {
+            width: clamp(6px, 0.9vw, 10px);
+            height: clamp(8px, 1.1vw, 12px);
+            background: #16101b;
+            border-radius: 50%;
+            position: absolute;
+            top: clamp(20px, 3.2vw, 36px);
+            z-index: 5;
+        }
+        .character .eye.left {
+            left: clamp(10px, 1.8vw, 20px);
+        }
+        .character .eye.right {
+            right: clamp(10px, 1.8vw, 20px);
+        }
+        .character .mouth {
+            width: clamp(14px, 2.2vw, 24px);
+            height: clamp(5px, 0.8vw, 8px);
+            border-bottom: 3px solid #25151c;
+            border-radius: 50%;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            top: clamp(32px, 5vw, 56px);
+            z-index: 5;
+            transition: .2s;
+        }
+        .character .body {
+            width: clamp(48px, 7.5vw, 82px);
+            height: clamp(42px, 6.5vw, 72px);
+            background: #58406f;
+            border: 4px solid #19121e;
+            border-radius: 15px 15px 5px 5px;
+            position: absolute;
+            top: clamp(42px, 6.5vw, 72px);
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .character .body::before {
+            content: "🧪";
+            position: absolute;
+            font-size: clamp(14px, 2vw, 22px);
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .character .arm {
+            width: clamp(14px, 2vw, 22px);
+            height: clamp(34px, 5vw, 58px);
+            background: #f1bd91;
+            border: 4px solid #19121e;
+            position: absolute;
+            top: clamp(46px, 7vw, 78px);
+            border-radius: 15px;
+            z-index: 1;
+        }
+        .character .arm.left {
+            left: clamp(-2px, 0.5vw, 4px);
+            transform: rotate(15deg);
+        }
+        .character .arm.right {
+            right: clamp(-2px, 0.5vw, 4px);
+            transform: rotate(-15deg);
+        }
+        .character .leg {
+            width: clamp(14px, 2vw, 24px);
+            height: clamp(26px, 4vw, 44px);
+            background: #262239;
+            border: 4px solid #19121e;
+            position: absolute;
+            top: clamp(78px, 11vw, 132px);
+            border-radius: 5px;
+        }
+        .character .leg.left {
+            left: 50%;
+            transform: translateX(-120%);
+        }
+        .character .leg.right {
+            right: 50%;
+            transform: translateX(120%);
+        }
+
+        /* ----- MONSTER SPRITE ----- */
+        .monster-stage {
+            height: clamp(100px, 18vh, 180px);
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            position: relative;
+            width: 100%;
+        }
+        .monster {
+            width: clamp(75px, 12vw, 130px);
+            height: clamp(95px, 15vh, 160px);
+            position: relative;
+            animation: monsterIdle 1.6s infinite ease-in-out;
+            filter: drop-shadow(0 10px 25px rgba(255, 50, 50, .2));
+            transform-origin: bottom center;
+        }
+        .monster .m-body {
+            width: clamp(50px, 8vw, 88px);
+            height: clamp(50px, 8vw, 88px);
+            background: radial-gradient(ellipse at 40% 30%, #4aff7a, #1a6b2a);
+            border: 4px solid #0d1f12;
+            border-radius: 45% 45% 30% 30%;
+            position: absolute;
+            top: clamp(8px, 1.5vw, 18px);
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2;
+            box-shadow: inset -8px -8px 25px rgba(0, 0, 0, .5);
+            overflow: hidden;
+        }
+        .monster .m-body::before {
+            content: "⚡";
+            position: absolute;
+            font-size: clamp(16px, 2.5vw, 26px);
+            right: 4px;
+            top: 10px;
+            opacity: .25;
+        }
+        .monster .m-body::after {
+            content: "";
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: rgba(255, 255, 255, .06);
+            border-radius: 50%;
+            left: 6px;
+            bottom: 8px;
+            box-shadow: 24px -12px 0 rgba(255, 255, 255, .04), 12px 20px 0 rgba(255, 255, 255, .05);
+        }
+        .monster .m-eye {
+            width: clamp(12px, 1.8vw, 20px);
+            height: clamp(14px, 2vw, 24px);
+            background: #ff1a1a;
+            border: 3px solid #0d1f12;
+            border-radius: 50%;
+            position: absolute;
+            top: clamp(20px, 3.2vw, 38px);
+            z-index: 4;
+            box-shadow: inset -3px -3px 8px rgba(0, 0, 0, .6), 0 0 20px rgba(255, 0, 0, .2);
+        }
+        .monster .m-eye.left {
+            left: clamp(14px, 2.5vw, 28px);
+        }
+        .monster .m-eye.right {
+            right: clamp(14px, 2.5vw, 28px);
+        }
+        .monster .m-eye::after {
+            content: "●";
+            position: absolute;
+            font-size: clamp(6px, 0.9vw, 10px);
+            color: #000;
+            top: 2px;
+            left: 3px;
+        }
+        .monster .m-mouth {
+            width: clamp(22px, 3.5vw, 38px);
+            height: clamp(10px, 1.5vw, 16px);
+            background: #0d1f12;
+            border-radius: 0 0 50% 50%;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            top: clamp(44px, 6.5vw, 74px);
+            z-index: 4;
+            overflow: hidden;
+            transition: .2s;
+        }
+        .monster .m-mouth::before {
+            content: "🦷";
+            position: absolute;
+            font-size: clamp(8px, 1.2vw, 13px);
+            left: 2px;
+            top: -2px;
+        }
+        .monster .m-mouth::after {
+            content: "🦷";
+            position: absolute;
+            font-size: clamp(8px, 1.2vw, 13px);
+            right: 2px;
+            top: -2px;
+        }
+        .monster .m-horn {
+            width: 0;
+            height: 0;
+            border-left: clamp(8px, 1.2vw, 14px) solid transparent;
+            border-right: clamp(8px, 1.2vw, 14px) solid transparent;
+            border-bottom: clamp(18px, 2.8vw, 32px) solid #1a6b2a;
+            position: absolute;
+            top: -2px;
+            z-index: 1;
+            filter: drop-shadow(0 -4px 10px rgba(0, 255, 0, .1));
+        }
+        .monster .m-horn.left {
+            left: clamp(8px, 1.5vw, 18px);
+            transform: rotate(-18deg);
+        }
+        .monster .m-horn.right {
+            right: clamp(8px, 1.5vw, 18px);
+            transform: rotate(18deg);
+        }
+        .monster .m-arm {
+            width: clamp(16px, 2.2vw, 28px);
+            height: clamp(32px, 4.5vw, 54px);
+            background: radial-gradient(ellipse at 50% 20%, #3dcc6a, #1a5a2a);
+            border: 3px solid #0d1f12;
+            border-radius: 20px;
+            position: absolute;
+            top: clamp(40px, 6vw, 72px);
+            z-index: 1;
+        }
+        .monster .m-arm.left {
+            left: clamp(-2px, 0.5vw, 4px);
+            transform: rotate(25deg);
+        }
+        .monster .m-arm.right {
+            right: clamp(-2px, 0.5vw, 4px);
+            transform: rotate(-25deg);
+        }
+        .monster .m-leg {
+            width: clamp(16px, 2.2vw, 28px);
+            height: clamp(24px, 3.5vw, 40px);
+            background: #1a5a2a;
+            border: 3px solid #0d1f12;
+            border-radius: 5px 5px 15px 15px;
+            position: absolute;
+            top: clamp(72px, 10.5vw, 126px);
+            z-index: 0;
+        }
+        .monster .m-leg.left {
+            left: 50%;
+            transform: translateX(-140%);
+        }
+        .monster .m-leg.right {
+            right: 50%;
+            transform: translateX(140%);
+        }
+
+        @keyframes idle {
+            50% {
+                transform: translateY(-5px);
+            }
+        }
+        @keyframes monsterIdle {
+            0%,
+            100% {
+                transform: translateY(0) rotate(-0.5deg);
+            }
+            50% {
+                transform: translateY(-6px) rotate(0.5deg);
+            }
+        }
+        .shake {
+            animation: shake .3s;
+        }
+        .monster-shake {
+            animation: shake .3s;
+        }
+        @keyframes shake {
+            0%,
+            100% {
+                transform: translate(0);
+            }
+            25% {
+                transform: translate(-8px, 4px);
+            }
+            50% {
+                transform: translate(8px, -4px);
+            }
+            75% {
+                transform: translate(-5px, -3px);
+            }
+        }
+
+        /* ===== ATTACKS + SECRET MOVE ===== */
+        .action-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            padding: 4px 0;
+        }
+        .action-row .secret-wrap {
+            flex-shrink: 0;
+        }
+        .action-row .secret-wrap .btn-secret {
+            border: 4px solid var(--yellow);
+            background: linear-gradient(135deg, var(--purple-dark), var(--red));
+            color: #fff;
+            font-family: 'Press Start 2P';
+            font-size: clamp(8px, 1vw, 12px);
+            padding: 10px 18px;
+            cursor: pointer;
+            box-shadow: 0 0 40px rgba(168, 117, 255, .25), 6px 6px rgba(0, 0, 0, .5);
+            transition: .15s;
+            text-shadow: 0 0 20px rgba(255, 255, 255, .2);
+            border-radius: 6px;
+            white-space: nowrap;
+        }
+        .action-row .secret-wrap .btn-secret:hover {
+            transform: scale(1.04) translateY(-2px);
+            box-shadow: 0 0 60px rgba(168, 117, 255, .4), 4px 4px rgba(0, 0, 0, .5);
+        }
+        .action-row .secret-wrap .btn-secret:active {
+            transform: scale(.95);
+        }
+
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            flex: 1;
+            min-width: 0;
+        }
+        .action {
+            min-height: clamp(48px, 7vh, 70px);
+            background: #1a1430;
+            color: var(--white);
+            border: 2px solid rgba(168, 117, 255, .25);
+            cursor: pointer;
+            font-family: 'Press Start 2P';
+            font-size: clamp(7px, 0.8vw, 10px);
+            transition: .12s;
+            border-radius: 6px;
+            padding: 4px 2px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            line-height: 1.3;
+            box-shadow: 0 0 20px rgba(168, 117, 255, .04);
+        }
+        .action:hover {
+            background: #2a1d45;
+            border-color: var(--purple);
+            transform: scale(1.02);
+            box-shadow: 0 0 30px rgba(168, 117, 255, .08);
+        }
+        .action:active {
+            transform: scale(.94);
+        }
+        .action .emoji {
+            font-size: clamp(14px, 1.6vw, 22px);
+            display: block;
+        }
+        .action .label {
+            font-size: clamp(6px, 0.6vw, 8px);
+            color: #aaa;
+            margin-top: 2px;
+            font-family: 'VT323', monospace;
+        }
+
+        /* ===== BATTLE LOG — BIGGER BOX (5+ lines) ===== */
+        .log-wrap {
+            flex-shrink: 0;
+            padding: 2px 0;
+        }
+        .log {
+            height: clamp(130px, 22vh, 220px);
+            overflow-y: auto;
+            background: #07050b;
+            border: 2px solid #2a1d45;
+            padding: 8px 12px;
+            font-size: clamp(17px, 1.5vw, 22px);
+            border-radius: 6px;
+            font-family: 'VT323', monospace;
+            line-height: 1.4;
+        }
+        .log p {
+            margin: 2px 0;
+        }
+        .log .good {
+            color: var(--green);
+        }
+        .log .bad {
+            color: var(--red);
+        }
+        .log .info {
+            color: var(--blue);
+        }
+        .log .special {
+            color: var(--yellow);
+        }
+        .log .hero-msg {
+            color: #7ac4ff;
+        }
+        .log .monster-msg {
+            color: #ff7a7a;
+        }
+
+        /* ===== STATS + COMBO ===== */
+        .bottom-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px 12px;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            padding: 2px 0;
+        }
+        .stats {
+            display: flex;
+            gap: 6px 14px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .stat {
+            background: #0d0916;
+            border: 1px solid #2a1d45;
+            padding: 2px 10px;
+            border-radius: 4px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: clamp(13px, 1.2vw, 18px);
+        }
+        .stat strong {
+            color: var(--yellow);
+            font-size: clamp(16px, 1.4vw, 22px);
+            font-family: 'Press Start 2P';
+            font-weight: normal;
+        }
+        .stat span {
+            color: #aaa;
+            font-size: clamp(11px, 1vw, 16px);
+        }
+
+        .combo-section {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .combo {
+            font-family: 'Press Start 2P';
+            color: var(--yellow);
+            font-size: clamp(10px, 1vw, 14px);
+            white-space: nowrap;
+        }
+        .combo-meter {
+            width: clamp(80px, 12vw, 150px);
+            height: 12px;
+            border: 2px solid rgba(255, 255, 255, .15);
+            background: #08050d;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .combo-meter div {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--purple), var(--red), var(--yellow));
+            transition: .2s;
+            border-radius: 2px;
+        }
+
+        /* ===== DAMAGE TEXT ===== */
+        .damage {
+            position: fixed;
+            pointer-events: none;
+            z-index: 200;
+            font-family: 'Press Start 2P';
+            font-size: clamp(18px, 2.5vw, 30px);
+            text-shadow: 3px 3px #000, 0 0 30px rgba(255, 50, 50, .2);
+            animation: damageFly 700ms forwards;
+        }
+        @keyframes damageFly {
+            from {
+                opacity: 1;
+                transform: translate(-50%, -10px) scale(.7);
+            }
+            to {
+                opacity: 0;
+                transform: translate(-50%, -80px) scale(1.3);
+            }
+        }
+
+        /* ===== MODAL ===== */
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(5, 3, 11, .93);
+            display: grid;
+            place-items: center;
+            z-index: 50;
+            padding: 16px;
+            backdrop-filter: blur(4px);
+        }
+        .modal-box {
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+            background: #120c20;
+            border: 4px solid var(--yellow);
+            padding: 28px 24px;
+            box-shadow: 0 0 80px rgba(168, 117, 255, .15);
+            border-radius: 12px;
+        }
+        .modal-box h2 {
+            font-family: 'Press Start 2P';
+            color: var(--yellow);
+            line-height: 1.6;
+            font-size: clamp(16px, 2vw, 28px);
+        }
+        .modal-box p {
+            font-size: clamp(20px, 2.2vw, 30px);
+            line-height: 1.3;
+            color: #ccc;
+            margin: 12px 0 20px;
+        }
+
+        /* ===== SECRET LETTER ===== */
+        #secret {
+            padding: 16px;
+            height: 100vh;
+            overflow-y: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #secret .secret-inner {
+            max-width: 780px;
+            width: 100%;
+            margin: auto;
+            text-align: center;
+        }
+        #secret h1 {
+            font-family: 'Press Start 2P';
+            color: var(--yellow);
+            line-height: 1.6;
+            font-size: clamp(16px, 2.2vw, 30px);
+            text-shadow: 0 0 40px rgba(255, 200, 0, .1);
+            margin-bottom: 12px;
+        }
+        #secret .sub-head {
+            font-size: clamp(18px, 1.8vw, 26px);
+            color: #aaa;
+            margin-bottom: 16px;
+        }
+        .letter {
+            background: #130d20;
+            border: 3px solid var(--purple-dark);
+            padding: clamp(16px, 2.5vw, 32px);
+            text-align: left;
+            font-size: clamp(17px, 1.6vw, 26px);
+            line-height: 1.5;
+            box-shadow: 10px 10px rgba(0, 0, 0, .3);
+            border-radius: 8px;
+            color: #e8e0f0;
+            font-family: 'Georgia', 'Times New Roman', serif;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        .letter p {
+            margin: 0.7em 0;
+        }
+        .letter .big-happy {
+            font-family: 'Press Start 2P';
+            font-size: clamp(22px, 3vw, 40px);
+            color: var(--yellow);
+            text-align: center;
+            margin: 18px 0 8px;
+            text-shadow: 0 0 30px rgba(255, 200, 0, .1);
+        }
+        .letter .big-meow {
+            font-family: 'Press Start 2P';
+            font-size: clamp(18px, 2.5vw, 34px);
+            color: var(--purple);
+            text-align: center;
+            margin: 6px 0 12px;
+            text-shadow: 0 0 30px rgba(168, 117, 255, .15);
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media(max-width:700px) {
+            .boss-area {
+                grid-template-columns: 1fr auto 1fr;
+                gap: 4px 4px;
+                padding: 6px 6px 4px;
+            }
+            .hp-wrap {
+                max-width: 140px;
+            }
+            .action-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 4px;
+            }
+            .action {
+                min-height: 42px;
+                font-size: 6px;
+                padding: 2px 1px;
+            }
+            .action .emoji {
+                font-size: 12px;
+            }
+            .action .label {
+                font-size: 5px;
+            }
+            .action-row .secret-wrap .btn-secret {
+                font-size: 7px;
+                padding: 6px 12px;
+            }
+            .stats {
+                gap: 4px 8px;
+            }
+            .stat {
+                padding: 1px 6px;
+                font-size: 11px;
+            }
+            .stat strong {
+                font-size: 13px;
+            }
+            .stat span {
+                font-size: 9px;
+            }
+            .combo-meter {
+                width: 60px;
+                height: 10px;
+            }
+            .combo {
+                font-size: 8px;
+            }
+            /* bigger log on tablet */
+            .log {
+                height: clamp(90px, 16vh, 140px);
+                font-size: 16px;
+                padding: 6px 10px;
+            }
+            .vs-badge {
+                font-size: 14px;
+                padding: 1px 4px;
+            }
+            .character-stage,
+            .monster-stage {
+                height: 80px;
+            }
+            .character {
+                transform: scale(.65);
+                transform-origin: bottom center;
+            }
+            .monster {
+                transform: scale(.65);
+                transform-origin: bottom center;
+            }
+            .hero-col .char-name,
+            .monster-col .char-name {
+                font-size: 10px;
+            }
+            .hero-col .char-name .badge,
+            .monster-col .char-name .badge {
+                font-size: 7px;
+            }
+            .hp-label {
+                font-size: 11px;
+            }
+            .bar {
+                height: 12px;
+            }
+            .letter {
+                font-size: 15px;
+                padding: 14px;
+                max-height: 60vh;
+            }
+            .letter .big-happy {
+                font-size: 18px;
+            }
+            .letter .big-meow {
+                font-size: 16px;
+            }
+            .modal-box {
+                padding: 18px 14px;
+            }
+            .modal-box h2 {
+                font-size: 14px;
+            }
+            .modal-box p {
+                font-size: 17px;
+            }
+            .title {
+                font-size: 20px;
+            }
+            .subtitle {
+                font-size: 20px;
+            }
+            .btn {
+                font-size: 9px;
+                padding: 10px 16px;
+            }
+            .header .logo {
+                font-size: 8px;
+            }
+            .header .level {
+                font-size: 7px;
+            }
+            .action-row {
+                gap: 4px;
+            }
+            .bottom-row {
+                gap: 4px 6px;
+            }
+        }
+
+        @media(max-width:420px) {
+            .boss-area {
+                grid-template-columns: 1fr auto 1fr;
+                gap: 2px 2px;
+                padding: 4px 3px;
+            }
+            .hp-wrap {
+                max-width: 100px;
+            }
+            .character-stage,
+            .monster-stage {
+                height: 64px;
+            }
+            .character {
+                transform: scale(.5);
+            }
+            .monster {
+                transform: scale(.5);
+            }
+            .hero-col .char-name,
+            .monster-col .char-name {
+                font-size: 8px;
+            }
+            .hp-label {
+                font-size: 9px;
+            }
+            .bar {
+                height: 10px;
+            }
+            .action-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 3px;
+            }
+            .action {
+                min-height: 34px;
+                font-size: 5px;
+            }
+            .action .emoji {
+                font-size: 10px;
+            }
+            .action .label {
+                font-size: 4px;
+            }
+            .action-row .secret-wrap .btn-secret {
+                font-size: 6px;
+                padding: 4px 8px;
+            }
+            .vs-badge {
+                font-size: 11px;
+                padding: 1px 3px;
+            }
+            /* bigger log on phone */
+            .log {
+                height: clamp(70px, 14vh, 100px);
+                font-size: 14px;
+                padding: 4px 8px;
+            }
+            .stat {
+                font-size: 9px;
+                padding: 1px 4px;
+            }
+            .stat strong {
+                font-size: 10px;
+            }
+            .stat span {
+                font-size: 7px;
+            }
+            .combo {
+                font-size: 7px;
+            }
+            .combo-meter {
+                width: 40px;
+                height: 8px;
+            }
+            .letter {
+                font-size: 13px;
+                padding: 10px;
+            }
+            .letter .big-happy {
+                font-size: 14px;
+            }
+            .letter .big-meow {
+                font-size: 13px;
+            }
+        }
+
+        /* ===== SCROLLBAR FOR LETTER ===== */
+        .letter::-webkit-scrollbar {
+            width: 4px;
+        }
+        .letter::-webkit-scrollbar-track {
+            background: #0a0512;
+        }
+        .letter::-webkit-scrollbar-thumb {
+            background: var(--purple);
+            border-radius: 2px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- =========================
+         INTRO
+    ========================= -->
+    <section id="intro" class="screen">
+        <div style="text-align:center;width:100%;max-width:700px;">
+            <div class="title">
+                <span class="highlight">⚔</span> BIRTHDAY<br>
+                <span class="highlight">BOSS</span> FIGHT
+            </div>
+            <div class="subtitle">
+                A Chaos Beast has spawned.<br>
+                Time for <span style="color:var(--blue);">Edi</span> to fight back.
+            </div>
+            <div style="text-align:center;">
+                <button class="btn" onclick="startGame()">
+                    ⚔ START BATTLE
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- =========================
+         GAME
+    ========================= -->
+    <section id="game" class="screen hidden">
+        <div class="game-container">
+
+            <!-- HEADER -->
+            <div class="header">
+                <div class="logo">⚔ <span class="accent">BIRTHDAY</span>_PROTOCOL.EXE</div>
+                <div class="level">LEVEL <span id="level">21</span> — FINAL BOSS</div>
+            </div>
+
+            <!-- BOSS AREA: HERO (Edi) vs MONSTER -->
+            <div class="boss-area">
+
+                <!-- HERO COLUMN -->
+                <div class="hero-col">
+                    <div class="char-name">🧪 EDI <span class="badge">⚡</span></div>
+                    <div class="hp-wrap">
+                        <div class="hp-label">
+                            <span>❤️ HP</span>
+                            <span class="hp-num" id="playerHpText">100 / 100</span>
+                        </div>
+                        <div class="bar">
+                            <div class="hp player-hp" id="playerHp"></div>
+                        </div>
+                    </div>
+                    <div class="character-stage">
+                        <div class="character" id="character">
+                            <div class="hair"></div>
+                            <div class="head">
+                                <div class="eye left"></div>
+                                <div class="eye right"></div>
+                                <div class="mouth"></div>
+                            </div>
+                            <div class="body"></div>
+                            <div class="arm left"></div>
+                            <div class="arm right"></div>
+                            <div class="leg left"></div>
+                            <div class="leg right"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VS -->
+                <div class="vs-col">
+                    <div class="vs-badge">⚡VS⚡</div>
+                </div>
+
+                <!-- MONSTER COLUMN -->
+                <div class="monster-col">
+                    <div class="char-name">👾 CHAOS BEAST <span class="badge">☠️</span></div>
+                    <div class="hp-wrap">
+                        <div class="hp-label">
+                            <span>💀 HP</span>
+                            <span class="hp-num" id="hpText">100 / 100</span>
+                        </div>
+                        <div class="bar">
+                            <div class="hp boss-hp" id="bossHp"></div>
+                        </div>
+                    </div>
+                    <div class="monster-stage">
+                        <div class="monster" id="monster">
+                            <div class="m-horn left"></div>
+                            <div class="m-horn right"></div>
+                            <div class="m-body"></div>
+                            <div class="m-eye left"></div>
+                            <div class="m-eye right"></div>
+                            <div class="m-mouth"></div>
+                            <div class="m-arm left"></div>
+                            <div class="m-arm right"></div>
+                            <div class="m-leg left"></div>
+                            <div class="m-leg right"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ATTACKS + SECRET MOVE -->
+            <div class="action-row">
+                <div class="secret-wrap">
+                    <button class="btn-secret" onclick="specialMove()">
+                        ✨ SECRET MOVE
+                    </button>
+                </div>
+                <div class="action-grid">
+                    <button class="action" onclick="attack('compliment')">
+                        <span class="emoji">💖</span>
+                        EMOTIONAL
+                        <span class="label">Weaponized affection</span>
+                    </button>
+                    <button class="action" onclick="attack('roast')">
+                        <span class="emoji">🔥</span>
+                        ROAST
+                        <span class="label">Critical disrespect</span>
+                    </button>
+                    <button class="action" onclick="attack('chemistry')">
+                        <span class="emoji">🧪</span>
+                        CHEMISTRY
+                        <span class="label">Highly unstable</span>
+                    </button>
+                    <button class="action" onclick="attack('chaos')">
+                        <span class="emoji">🌀</span>
+                        CHAOS BEAM
+                        <span class="label">Probably illegal</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- BATTLE LOG — bigger box -->
+            <div class="log-wrap">
+                <div class="log" id="log">
+                    <p class="info">> Birthday protocol initialized.</p>
+                    <p class="info">> The Chaos Beast has emerged from the void.</p>
+                    <p class="special">> Edi steps up to fight.</p>
+                    <p class="bad">> WARNING: The monster is suspiciously powerful.</p>
+                </div>
+            </div>
+
+            <!-- STATS + COMBO -->
+            <div class="bottom-row">
+                <div class="stats">
+                    <div class="stat"><strong>97</strong><span>CHAOS</span></div>
+                    <div class="stat"><strong>200</strong><span>CHARISMA</span></div>
+                    <div class="stat"><strong>100</strong><span>BRAIN</span></div>
+                    <div class="stat"><strong>14</strong><span>SLEEP</span></div>
+                </div>
+                <div class="combo-section">
+                    <div class="combo" id="combo">COMBO: 0</div>
+                    <div class="combo-meter"><div id="comboMeter"></div></div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- =========================
+         WIN MODAL
+    ========================= -->
+    <div id="winModal" class="modal hidden">
+        <div class="modal-box">
+            <h2>🏆 MONSTER DEFEATED 🏆</h2>
+            <p id="winText">The Chaos Beast has been vanquished.</p>
+            <button class="btn" onclick="showSecret()">📜 OPEN REWARD</button>
+        </div>
+    </div>
+
+    <!-- =========================
+         SECRET LETTER (closing lines removed)
+    ========================= -->
+    <section id="secret" class="screen hidden">
+        <div class="secret-inner">
+            <h1>★ SECRET AREA UNLOCKED ★</h1>
+            <div class="sub-head">The battle is over. Feelings have spawned.</div>
+
+            <div class="letter">
+                <p>Dear Birthday boy,</p>
+
+                <p>Congratulations. You have successfully defeated the Chaos Beast and survived another year of existence.</p>
+
+                <p>I could have made you a normal birthday website, but where's the fun in that? Also I wasn't really sure how to write this without making it ridiculously cheesy, so I'm going to try anyway.</p>
+
+                <p>I'm genuinely glad I met you.</p>
+
+                <p>There are people you talk to because the conversation is fun, and then there are people who somehow make you want to keep talking just because there's always another little piece of them you haven't discovered yet. You're definitely the second kind.</p>
+
+                <p>You're a strange combination of things, honestly. You're easy to talk to, annoyingly good at listening, somehow capable of turning almost anything into a joke, and yet there are still parts of you that you keep tucked away somewhere. I think that's one of the things that makes you interesting. You can tell someone a ridiculous amount about yourself and still somehow remain a mystery.</p>
+
+                <p>And I like that.</p>
+
+                <p>I like your stupid jokes.<br>
+                I like your random thoughts.<br>
+                I like the way you get passionate about things you care about.<br>
+                I like hearing you talk about the things you love.<br>
+                I like that you can roast me and somehow make it impossible to actually be offended.</p>
+
+                <p>And, perhaps most importantly, I like that being around you doesn't feel like I have to make myself smaller.</p>
+
+                <p>That's rarer than people realize.</p>
+
+                <p>So I hope this year is kind to you.</p>
+
+                <p>I hope you find things that make you genuinely excited to wake up. I hope you meet people who appreciate the parts of you that you don't always show. I hope you get to do ridiculous things you'll laugh about years later. And I hope you keep the people you love close.</p>
+
+                <p>You deserve good things. And if life decides to be an absolute bastard sometimes—which it inevitably will—I hope you remember that one bad chapter doesn't make a bad story.</p>
+
+                <div class="big-meow">MEOW :p</div>
+
+                <p>This is getting suspiciously wholesome, so I'm stopping before your ego gets too powerful.</p>
+
+                <div class="big-happy">HAPPY BIRTHDAY, EDI.</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================
+         JAVASCRIPT
+    ============================================================ -->
+    <script>
+        /* =========================================
+           PERSONALIZE
+        ========================================= */
+        const CONFIG = {
+            name: "EDI",
+            age: 24
+        };
+
+        /* =========================================
+           GAME STATE
+        ========================================= */
+        let bossHP = 100;
+        let playerHP = 100;
+        let combo = 0;
+        let gameOver = false;
+
+        /* =========================================
+           ATTACKS — Edi's moves
+        ========================================= */
+        const attacks = {
+            compliment: {
+                damage: 14,
+                messages: [
+                    "💖 EMOTIONAL DAMAGE! The monster was not ready.",
+                    "Critical hit: you complimented the beast. It short-circuited.",
+                    "The Chaos Beast tried to act tough. Failed miserably.",
+                    "Psychic damage from sincerity. The monster is confused."
+                ]
+            },
+            roast: {
+                damage: 11,
+                messages: [
+                    "🔥 DIRECT HIT! The monster's ego filed a complaint.",
+                    "You roasted the beast so hard it glitched.",
+                    "The Chaos Beast has been emotionally microwaved.",
+                    "Damage dealt. The monster is questioning its life choices."
+                ]
+            },
+            chemistry: {
+                damage: 18,
+                messages: [
+                    "🧪 You mixed substances that shouldn't exist. The monster regrets everything.",
+                    "A suspicious reaction occurred. The beast is now glowing.",
+                    "The lab is on fire. Worth it. The monster is melting.",
+                    "CHEMISTRY ATTACK! Massive damage to the Chaos Beast."
+                ]
+            },
+            chaos: {
+                damage: 9,
+                messages: [
+                    "🌀 Pure concentrated nonsense unleashed. The monster is baffled.",
+                    "Nobody understands what just happened. The beast is confused.",
+                    "The laws of physics have filed a complaint. Monster is reeling.",
+                    "Chaos beam successful. The beast is disoriented."
+                ]
+            }
+        };
+
+        const monsterAttacks = [
+            "The Chaos Beast swiped with a giant claw.",
+            "The monster unleashed a blast of pure birthday energy.",
+            "It tried to eat your soul. You dodged.",
+            "The beast deployed a suspiciously strong existential crisis.",
+            "It hit you with a 3AM thought spiral.",
+            "The monster used CONFUSION. It was mildly effective.",
+            "A wave of chaotic nonsense washed over you.",
+            "The beast roared. The sound alone dealt damage."
+        ];
+
+        /* =========================================
+           HELPERS
+        ========================================= */
+        function $(id) { return document.getElementById(id); }
+
+        /* =========================================
+           START
+        ========================================= */
+        function startGame() {
+            $("intro").classList.add("hidden");
+            $("game").classList.remove("hidden");
+            $("level").textContent = CONFIG.age;
+            addLog("> BOSS: The Chaos Beast has entered the arena.", "special");
+            addLog("> Edi draws his weapon: sheer audacity.", "hero-msg");
+            updateUI();
+        }
+
+        /* =========================================
+           ATTACK — Edi attacks the monster
+        ========================================= */
+        function attack(type) {
+            if (gameOver) return;
+
+            const move = attacks[type];
+            let damage = move.damage;
+
+            combo++;
+            if (combo >= 3) {
+                damage += combo * 2;
+            }
+
+            if (Math.random() < .15) {
+                damage *= 2;
+                addLog("💥 CRITICAL HIT! Damage doubled.", "special");
+            }
+
+            bossHP = Math.max(0, bossHP - damage);
+
+            const monsterEl = document.getElementById("monster");
+            monsterEl.classList.remove("monster-shake");
+            void monsterEl.offsetWidth;
+            monsterEl.classList.add("monster-shake");
+
+            showDamage("-" + damage, false);
+
+            const msg = move.messages[Math.floor(Math.random() * move.messages.length)];
+            addLog("> " + msg, "good");
+
+            updateUI();
+
+            if (bossHP <= 0) {
+                win();
+                return;
+            }
+
+            enemyTurn();
+        }
+
+        /* =========================================
+           MONSTER TURN
+        ========================================= */
+        function enemyTurn() {
+            if (gameOver) return;
+
+            if (Math.random() < .20) {
+                addLog("> The Chaos Beast swung and missed! It looks embarrassed.", "info");
+                return;
+            }
+
+            let damage = Math.floor(Math.random() * 9) + 4;
+            damage += Math.min(combo, 5);
+
+            playerHP = Math.max(0, playerHP - damage);
+
+            const heroEl = document.getElementById("character");
+            heroEl.classList.remove("shake");
+            void heroEl.offsetWidth;
+            heroEl.classList.add("shake");
+
+            showDamage("-" + damage, true);
+
+            const msg = monsterAttacks[Math.floor(Math.random() * monsterAttacks.length)];
+            addLog("> " + msg, "bad");
+
+            updateUI();
+
+            if (playerHP <= 0) {
+                lose();
+            }
+        }
+
+        /* =========================================
+           SECRET MOVE
+        ========================================= */
+        function specialMove() {
+            if (gameOver) return;
+
+            const damage = Math.floor(Math.random() * 20) + 20;
+            bossHP = Math.max(0, bossHP - damage);
+            combo += 2;
+
+            addLog("> ✨ SECRET MOVE: UNREASONABLE AFFECTION.", "special");
+            addLog("> The Chaos Beast has no defense against this.", "good");
+            showDamage("-" + damage, false);
+
+            const monsterEl = document.getElementById("monster");
+            monsterEl.classList.remove("monster-shake");
+            void monsterEl.offsetWidth;
+            monsterEl.classList.add("monster-shake");
+
+            updateUI();
+
+            if (bossHP <= 0) {
+                win();
+            } else {
+                enemyTurn();
+            }
+        }
+
+        /* =========================================
+           UI UPDATES
+        ========================================= */
+        function updateUI() {
+            $("bossHp").style.width = bossHP + "%";
+            $("playerHp").style.width = playerHP + "%";
+            $("hpText").textContent = bossHP + " / 100";
+            $("playerHpText").textContent = playerHP + " / 100";
+            $("combo").textContent = "COMBO: " + combo;
+            $("comboMeter").style.width = Math.min(combo * 12, 100) + "%";
+
+            const mouth = document.querySelector(".monster .m-mouth");
+            if (mouth) {
+                if (bossHP <= 30) {
+                    mouth.style.height = "10px";
+                    mouth.style.borderRadius = "50% 50% 20% 20%";
+                    mouth.style.background = "#3a0a0a";
+                } else if (bossHP <= 60) {
+                    mouth.style.height = "14px";
+                    mouth.style.borderRadius = "0 0 50% 50%";
+                    mouth.style.background = "#1a2a1a";
+                } else {
+                    mouth.style.height = "18px";
+                    mouth.style.borderRadius = "0 0 50% 50%";
+                    mouth.style.background = "#0d1f12";
+                }
+            }
+
+            const hm = document.querySelector(".character .mouth");
+            if (hm) {
+                if (playerHP <= 30) {
+                    hm.style.height = "3px";
+                    hm.style.borderBottom = "0";
+                    hm.style.borderTop = "3px solid #25151c";
+                } else if (playerHP <= 60) {
+                    hm.style.height = "5px";
+                    hm.style.borderBottom = "2px solid #25151c";
+                    hm.style.borderTop = "0";
+                } else {
+                    hm.style.height = "8px";
+                    hm.style.borderBottom = "3px solid #25151c";
+                    hm.style.borderTop = "0";
+                }
+            }
+        }
+
+        /* =========================================
+           LOG
+        ========================================= */
+        function addLog(text, className = "") {
+            const p = document.createElement("p");
+            p.textContent = text;
+            p.className = className;
+            $("log").appendChild(p);
+            $("log").scrollTop = $("log").scrollHeight;
+            while ($("log").children.length > 50) {
+                $("log").removeChild($("log").firstChild);
+            }
+        }
+
+        /* =========================================
+           DAMAGE NUMBER
+        ========================================= */
+        function showDamage(text, isPlayer) {
+            const el = document.createElement("div");
+            el.className = "damage";
+            el.textContent = text;
+            el.style.left = isPlayer ? "25%" : "75%";
+            el.style.top = "35%";
+            el.style.color = isPlayer ? "#4ce8ff" : "#ff526d";
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 700);
+        }
+
+        /* =========================================
+           WIN / LOSE
+        ========================================= */
+        function win() {
+            gameOver = true;
+            $("winText").textContent =
+                "The Chaos Beast has been defeated! Edi is the champion of birthday justice.";
+            $("winModal").classList.remove("hidden");
+            addLog("🏆 VICTORY! Edi stands tall.", "special");
+        }
+
+        function lose() {
+            gameOver = true;
+            $("winText").textContent =
+                "You were defeated. The Chaos Beast remains undefeated. But hey, you're still alive.";
+            $("winModal").classList.remove("hidden");
+            const button = document.querySelector("#winModal .btn");
+            button.textContent = "🔄 TRY AGAIN";
+            button.onclick = restart;
+            addLog("💀 Edi has fallen... but he'll be back.", "bad");
+        }
+
+        /* =========================================
+           SECRET LETTER
+        ========================================= */
+        function showSecret() {
+            $("winModal").classList.add("hidden");
+            $("game").classList.add("hidden");
+            $("secret").classList.remove("hidden");
+        }
+
+        /* =========================================
+           RESTART
+        ========================================= */
+        function restart() {
+            bossHP = 100;
+            playerHP = 100;
+            combo = 0;
+            gameOver = false;
+
+            $("winModal").classList.add("hidden");
+            $("secret").classList.add("hidden");
+            $("game").classList.remove("hidden");
+
+            $("log").innerHTML = `
+                <p class="info">> Birthday protocol reinitialized.</p>
+                <p class="info">> The Chaos Beast has returned.</p>
+                <p class="special">> Edi steps up once more.</p>
+                <p class="bad">> WARNING: The monster is still suspiciously powerful.</p>
+            `;
+
+            const mouth = document.querySelector(".monster .m-mouth");
+            if (mouth) {
+                mouth.style.height = "18px";
+                mouth.style.borderRadius = "0 0 50% 50%";
+                mouth.style.background = "#0d1f12";
+            }
+            const hm = document.querySelector(".character .mouth");
+            if (hm) {
+                hm.style.height = "8px";
+                hm.style.borderBottom = "3px solid #25151c";
+                hm.style.borderTop = "0";
+            }
+
+            updateUI();
+        }
+
+        /* =========================================
+           KEYBOARD EASTER EGGS
+        ========================================= */
+        document.addEventListener("keydown", function(e) {
+            if (e.key.toLowerCase() === "b" && !gameOver) {
+                combo += 3;
+                addLog("> SECRET KEY DETECTED: BIRTHDAY MODE.", "special");
+                updateUI();
+                showFloatingNotif("🎂 BIRTHDAY MODE", "Combo boosted!");
+            }
+            if (e.key.toLowerCase() === "m" && !gameOver) {
+                addLog("> You whispered 'monster' and the beast flinched.", "info");
+                bossHP = Math.max(0, bossHP - 5);
+                updateUI();
+                if (bossHP <= 0) win();
+            }
+        });
+
+        /* =========================================
+           FLOATING NOTIFICATION
+        ========================================= */
+        function showFloatingNotif(title, msg) {
+            const el = document.createElement("div");
+            el.style.cssText = `
+                position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%);
+                background: rgba(0,0,0,.92); border: 2px solid var(--yellow);
+                padding: 10px 24px; font-family: 'Press Start 2P'; font-size: 11px;
+                color: var(--yellow); z-index: 300; border-radius: 8px;
+                text-align: center; box-shadow: 0 0 50px rgba(255,200,0,.1);
+                animation: floating 1s infinite ease-in-out;
+                pointer-events: none;
+            `;
+            el.innerHTML = `${title}<br><span style="font-size:8px;color:#aaa;">${msg}</span>`;
+            document.body.appendChild(el);
+            setTimeout(() => { if (el.parentNode) el.remove(); }, 2200);
+        }
+
+        // initial UI
+        document.addEventListener("DOMContentLoaded", function() {
+            updateUI();
+        });
+
+        console.log("🎂 BIRTHDAY_PROTOCOL.EXE — Edi edition");
+        console.log("💡 Press 'B' for a birthday boost, 'M' for a secret monster poke.");
+        console.log("Happy birthday, Edi.");
+    </script>
+
+</body>
+</html>
